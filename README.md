@@ -71,7 +71,7 @@ WHERE row_num > 1;
 
 11 rows (0.23%) of the dataset contained negative balances. Given that such values typically indicate overdrafts or system issues, but no metadata confirmed that behavior, I treated them as suspicious and incorporated that into my new flagging system rather than dropping them.
 
-Performance comparison of flagging systems
+### Performance comparison of flagging systems
 
 <img width="676" height="221" alt="Screenshot 2025-08-24 131853" src="https://github.com/user-attachments/assets/e5b5edcd-ff62-440b-bc8b-d8d60d10814b" />
 
@@ -171,7 +171,9 @@ Additional Analysis
 
 ## Tools
 SQL: MySQL 8.0
+
 Analysis: MySQL
+
 Visualization: Power Bi
 
 ## Conclusions
