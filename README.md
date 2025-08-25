@@ -1,17 +1,18 @@
-# fraud_detection
-Fraud detection in mobile transactions using SQL.
+# Fraud detection using SQL
 
 ## Project Overview
 
 This project explores the detection of fraudulent mobile money transactions using SQL
 
-## Dataset description
+### Dataset description
 
-Source: Synthetic Mobile money transaction dataset in csv file format
+**Source:** Synthetic Mobile money transaction dataset in csv file format
 
-Main table: transactions2 (fully cleaned)
+**Main table:** transactions2 (fully cleaned)
 
-Size: 4,638 rows
+**Time period:** 2022-2023
+
+**Size:** 4,638 rows
 
 ## Key columns
 | Column name | Description |
@@ -79,8 +80,21 @@ The existing fraud detection system had 0% precision. Every single alert was a f
 My system caught 3 more frauds than the original. 
 
 To improve on the unrealistic lack of true positives, I developed an enhanced system using my domian knowledge of mobile money systems that significantly outperformed the original. my system achieved 3.16% precision compared to the original 0% and also increased recall from 0% to 4.23% meaning we are catching more actual fraud while also reducing false positives.
-
-
+```
+UPDATE transactions2
+SET suspicious_transfer = CASE
+    WHEN (trans_type = 'Transfer' OR trans_type = 'Cash_Out')
+         AND (
+			amount > 15000 OR
+            (oldbalanceOrg - amount < 0 AND amount > 20000) OR-- Overdrafts with siginificant amounts
+			(amount % 10000 = 0 AND amount > 30000) OR  -- Large and round amounts
+			(oldbalanceOrg = 0 AND amount > 30000) OR -- New account abuse
+			(oldbalanceDest = 0 AND amount > 20000)  -- Mule account pattern
+         )
+    THEN 1
+    ELSE 0
+END;
+```
 ## Exploratory Data Analysis
 
 Fraud by transaction type
@@ -94,7 +108,9 @@ FROM transactions2
 GROUP BY trans_type
 ORDER BY fraud_rate DESC;
 ```
-Insight: Fraud is more common in transaction types of Transfer and Cash Out and almost non existent in Cash In and Payment
+<img width="563" height="372" alt="Screenshot 2025-08-25 181142" src="https://github.com/user-attachments/assets/25d14005-674c-41ad-bf4f-f156d9c61c10" />
+
+Observation: Fraud is more common in transaction types of Transfer and Cash Out and almost non existent in Cash In and Payment
 
 Fraud by amount range
 ```
@@ -112,7 +128,9 @@ FROM transactions2
 GROUP BY amount_range
 ORDER BY fraud_rate DESC;
 ```
-Insight:Fraud is common with higher amounts
+<img width="565" height="337" alt="Screenshot 2025-08-25 181250" src="https://github.com/user-attachments/assets/c624d13f-f053-418e-bfb5-91590af40df4" />
+
+Observation:Fraud is common with higher amounts
 
 Fraud by time of day
 ```
@@ -130,7 +148,9 @@ FROM transactions2
 GROUP BY time_of_day
 ORDER BY fraud_rate_perc DESC;
 ```
-Insight: fraud cases are more common late night between midnight and 5AM
+<img width="538" height="337" alt="Screenshot 2025-08-25 181006" src="https://github.com/user-attachments/assets/c173f96e-250c-4804-893b-0a89c6c802e5" />
+
+Observation: fraud cases are more common late night between midnight and 5AM
 
 Fraud by day of week
 ```
@@ -143,11 +163,33 @@ from transactions2
 GROUP BY day_of_week
 ORDER BY fraud_rate_perc desc;
 ```
-Insight: Fraud is more common on Thursdays and Fridays
+Observation: Fraud is more common on Thursdays and Fridays
 
+Additional Analysis
+* Fraud by origin (Trying to spot risky accounts/merchants)
+* Correlation between flagged and actual fraud
 
+## Tools
+SQL: MySQL 8.0
+Analysis: MySQL
+Visualization: Power Bi
 
+## Conclusions
+* Original fraud detection system demonstrated critical performance issues such as 0% precision and recall.
+* The system i developed showed measurable improvements. From 0& to 3.16% and 4.23% respectively.
+* Fraudulent transactions made up a small fraction of total transactions but were heavily concentrated in large transfers.
+* Cash_Out and Transfer were the transaction types most commonly associated with fraud.
+* Fraud attempts peaked during late-night to early-morning hours, when detection or human monitoring may be weaker.
 
+  ## Challenges and limitations
+* During data import, i came across Error 1292: Incorrect date value: '0000-00-00' for column 'trans_datetime' at row 1. No matter what fixes I tried, the error wasnt getting resolved. What i finally did was to change trans_datetime data type to text (varchar) and then converted to Datetime after.
+* When I tried to connect MySQL to Power Bi for visualizations, i encountered a SSL/TLS issue where an error occured during the pre-login handshake. To fix it i edited connections in MySQL and disabled SSL.
+
+## Recommendations
+* Tighten controls on large transactions. Since most fraud was observed in the >15,000 range,additional checks (multi-factor authentication, short delays for manual review should be enforced.
+* Prioritize monitoring of Cash Out and Transfer. These two types accounted for the bulk of fraud cases. Stricter thresholds and more aggressive flagging rules should be applied to them compared to Payment and Cash In
+* Implement stricter flagging during late night periods (between Midnight and 5:00 AM since fraud peaked around these hours
+* Leverage customer profiling. Incorporating account history such as typical transaction amounts and times can help build risk scores that adapt to individial accounts rather than one size fits all.
 
 
 
